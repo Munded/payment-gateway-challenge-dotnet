@@ -15,7 +15,8 @@ public class PaymentsController : Controller
     {
         _paymentsRepository = paymentsRepository;
     }
-
+    
+    
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<PostPaymentResponse?>> GetPaymentAsync(Guid id)
     {
