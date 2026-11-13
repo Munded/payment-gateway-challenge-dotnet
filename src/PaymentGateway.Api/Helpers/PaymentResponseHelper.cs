@@ -11,7 +11,7 @@ public static class PaymentResponseHelper
         PaymentStatus status) => new()
     {
         // usually the id would be created in the db, but we'll generate it in the mapper for this
-        Id = Guid.Empty,
+        Id = Guid.NewGuid(),
         Status = status,
         CardNumberLastFour = GetLastFourDigits(request.CardNumber),
         ExpiryMonth = request.ExpiryMonth,

@@ -35,18 +35,21 @@ public class PaymentService
 
         var bankResult = await _bankClient.ProcessPaymentAsync(bankRequest);
 
-        if (bankResult == null || !bankResult.IsSuccess)
+        if (bankResult == null || !bankResult.IsSuccess || bankResult.Response == null)
         {
-            _logger.LogWarning($"Bank Client returned an error for {PaymentResponseHelper.GetLastFourDigits(bankRequest.CardNumber)}");
+            _logger.LogWarning(
+                "Bank Client returned an error for {CardLastFour}",
+                PaymentResponseHelper.GetLastFourDigits(bankRequest.CardNumber));
+            return ServiceCall<PostPaymentResponse>.Failure();
         }
-        
+
         var status = bankResult.Response.Authorized
             ? PaymentStatus.Authorized
             : PaymentStatus.Declined;
-        
+
         var payment = PaymentResponseHelper.Build(request, status);
         _paymentsRepository.Add(payment);
-        
+
         return ServiceCall<PostPaymentResponse>.Success(payment);
     }
 }
