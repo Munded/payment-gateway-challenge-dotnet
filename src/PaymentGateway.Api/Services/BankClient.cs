@@ -23,7 +23,7 @@ public class BankClient
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"An error occured while processing {request}");
+                _logger.LogError($"TODO better message - An error occured while processing {request}");
 
                 return new ServiceCall<BankPaymentResponse>() { IsSuccess = false };
             }
@@ -32,7 +32,7 @@ public class BankClient
 
             if (processedResponse is null)
             {
-                _logger.LogError($"An error occured while processing {request}");
+                _logger.LogError($"TODO better messageAn error occured while processing {request}");
 
                 return new ServiceCall<BankPaymentResponse>() { IsSuccess = false };
             }
