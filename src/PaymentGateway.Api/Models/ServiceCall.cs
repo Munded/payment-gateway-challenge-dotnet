@@ -13,4 +13,9 @@ public class ServiceCall<T>
         IsSuccess = true,
         Response = response
     };
+    
+    public static ServiceCall<T> Failure() => new()
+    {
+        IsSuccess = false
+    };
 }
