@@ -8,10 +8,10 @@ public static class PaymentResponseHelper
 {
     public static PostPaymentResponse Build(
         PostPaymentRequest request,
-        PaymentStatus status,
-        Guid? id = null) => new()
+        PaymentStatus status) => new()
     {
-        Id = id ?? Guid.Empty,
+        // usually the id would be created in the db, but we'll generate it in the mapper for this
+        Id = Guid.Empty,
         Status = status,
         CardNumberLastFour = GetLastFourDigits(request.CardNumber),
         ExpiryMonth = request.ExpiryMonth,

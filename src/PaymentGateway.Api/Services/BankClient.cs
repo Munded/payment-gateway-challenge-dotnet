@@ -4,7 +4,7 @@ using PaymentGateway.Api.Models.Responses;
 
 namespace PaymentGateway.Api.Services;
 
-public class BankClient
+public class BankClient : IBankClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<BankClient> _logger;

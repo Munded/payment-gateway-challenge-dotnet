@@ -12,15 +12,18 @@ namespace PaymentGateway.Api.Controllers;
 public class PaymentsController : Controller
 {
     private readonly PaymentsRepository _paymentsRepository;
+    private readonly PaymentService _paymentsService;
     private readonly PaymentValidator _paymentValidator;
     private readonly ILogger<PaymentsController> _logger;
 
     public PaymentsController(
         PaymentsRepository paymentsRepository,
+        PaymentService paymentsService,
         PaymentValidator paymentValidator,
         ILogger<PaymentsController> logger)
     {
         _paymentsRepository = paymentsRepository;
+        _paymentsService = paymentsService;
         _paymentValidator = paymentValidator;
         _logger = logger;
     }
@@ -48,7 +51,17 @@ public class PaymentsController : Controller
             return BadRequest(PaymentResponseHelper.BuildRejected(request));
         }
         
-        // payment service
-        return Ok(new PostPaymentResponse());
+        var result = await _paymentsService.ProcessPaymentAsync(request);
+        
+        if (!result.IsSuccess)
+        {
+            _logger.LogWarning(
+                "Payment rejected. CardLastFour: {CardLastFour}, Errors: Bank Service Failed",
+                PaymentResponseHelper.GetLastFourDigits(request.CardNumber));
+
+            return BadRequest(PaymentResponseHelper.BuildRejected(request));
+        }
+        
+        return Ok(result.Response);
     }
 }
