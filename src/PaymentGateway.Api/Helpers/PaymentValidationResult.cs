@@ -1,4 +1,4 @@
-namespace PaymentGateway.Api.Services;
+namespace PaymentGateway.Api.Helpers;
 
 public class PaymentValidationResult
 {
