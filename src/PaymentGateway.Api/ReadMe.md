@@ -48,6 +48,19 @@ Or target the test project only:
 dotnet test test/PaymentGateway.Api.Tests
 ```
 
+### What’s covered
+
+| Suite | Style | Needs Docker? |
+|-------|--------|---------------|
+| `PaymentValidatorTests` / `PaymentServiceTests` / `PaymentsControllerTests` | Unit | No |
+| `PaymentsApiE2ETests` | HTTP e2e via `WebApplicationFactory` (bank stubbed) | No |
+
+Run only the e2e suite:
+
+```bash
+dotnet test test/PaymentGateway.Api.Tests --filter FullyQualifiedName~PaymentsApiE2ETests
+```
+
 ## Manual request scripts
 
 Bank simulator rules (by last digit of `cardNumber`):
