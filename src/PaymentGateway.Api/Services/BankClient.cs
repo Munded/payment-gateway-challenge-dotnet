@@ -1,3 +1,4 @@
+using PaymentGateway.Api.Helpers;
 using PaymentGateway.Api.Models;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
@@ -23,7 +24,7 @@ public class BankClient : IBankClient
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"TODO better message - An error occured while processing {request}");
+                LogError(request);
 
                 return new ServiceCall<BankPaymentResponse>() { IsSuccess = false };
             }
@@ -32,7 +33,7 @@ public class BankClient : IBankClient
 
             if (processedResponse is null)
             {
-                _logger.LogError($"TODO better messageAn error occured while processing {request}");
+                LogError(request);
 
                 return new ServiceCall<BankPaymentResponse>() { IsSuccess = false };
             }
@@ -41,8 +42,13 @@ public class BankClient : IBankClient
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            LogError(request);
             throw;
         }
+    }
+
+    private void LogError(BankPaymentRequest request)
+    {
+        _logger.LogError($"An error occured while processing payment for card {PaymentResponseHelper.GetLastFourDigits(request.CardNumber)}");
     }
 }

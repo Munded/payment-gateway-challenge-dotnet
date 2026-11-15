@@ -61,17 +61,31 @@ Run only the e2e suite:
 dotnet test test/PaymentGateway.Api.Tests --filter FullyQualifiedName~PaymentsApiE2ETests
 ```
 
+## Payment status
+
+`status` is a `PaymentStatus` enum. ASP.NET serializes it as a **number** in JSON:
+
+| JSON `status` | Name | Meaning |
+|---------------|------|---------|
+| `0` | Authorized | Acquiring bank approved the payment |
+| `1` | Declined | Acquiring bank refused the payment |
+| `2` | Rejected | Gateway did not complete processing — validation failed, or the bank call failed / was unavailable |
+
+How it is set:
+
+1. **Rejected (`2`)** — request fails `PaymentValidator`, **or** `IBankClient` returns failure (e.g. bank HTTP 503). Response is HTTP `400` with a Rejected body; payment is **not** stored.
+2. **Authorized (`0`)** — bank responds successfully with `authorized: true`. HTTP `200`; payment is stored.
+3. **Declined (`1`)** — bank responds successfully with `authorized: false`. HTTP `200`; payment is stored (so it can still be retrieved by id).
+
 ## Manual request scripts
 
 Bank simulator rules (by last digit of `cardNumber`):
 
-| Last digit | Bank result                          | Gateway status |
-|------------|--------------------------------------|----------------|
-| Odd (1,3,5,7,9) | Authorized                      | `Authorized` |
-| Even (2,4,6,8)  | Declined                         | `Declined` |
-| `0`             | HTTP 503                         | `Rejected` |
-
-`Status` is serialized as a string enum: `Authorized`, `Declined`, or `Rejected` (see Swagger for descriptions).
+| Last digit | Bank result | Gateway `status` |
+|------------|-------------|------------------|
+| Odd (`1`,`3`,`5`,`7`,`9`) | Authorized | `0` (Authorized) |
+| Even (`2`,`4`,`6`,`8`) | Declined | `1` (Declined) |
+| `0` | HTTP 503 | `2` (Rejected) |
 
 ### Authorized payment (POST)
 
@@ -144,3 +158,25 @@ curl -s -k https://localhost:7092/api/Payments/<payment-id>
 ### HTTP (no TLS)
 
 Same paths on `http://localhost:5067` if you prefer not to use `-k` with HTTPS.
+
+## To improve
+
+### Observability
+- [ ] Log the exception object in `catch` (`LogError(ex, ...)`) instead of message-only
+- [ ] Prefer structured log templates over string interpolation (`{CardLastFour}`, `{StatusCode}`)
+- [ ] Add correlation / payment id to logs; consider metrics (count by status, bank latency)
+
+### Code / API
+- [ ] Plumb `CancellationToken` from controller → `PaymentService` → `BankClient` / `HttpClient`
+- [ ] Optionally serialize `PaymentStatus` as strings (`Authorized` / `Declined` / `Rejected`) via `JsonStringEnumConverter` for clearer API/Swagger
+- [ ] Clarify HTTP status for bank outage (400 vs 502/503) vs validation failures
+- [ ] Use `GetPaymentResponse` for GET (or remove the unused DTO)
+- [ ] Make `PaymentsRepository` thread-safe / encapsulate the public `List`
+
+### Packaging / hardening
+- [ ] HttpClient timeout 
+- [ ] Dockerfile for the API; optional compose service alongside the bank simulator
+- [ ] Durable storage if moving beyond single-process in-memory repo
+
+### Testing / docs
+- [ ] If string enums are enabled, add Swagger descriptions for each status value
