@@ -7,6 +7,8 @@ namespace PaymentGateway.Api.Services;
 
 public class BankClient : IBankClient
 {
+    private const int MaxAttempts = 3;
+
     private readonly HttpClient _httpClient;
     private readonly ILogger<BankClient> _logger;
 
@@ -15,40 +17,60 @@ public class BankClient : IBankClient
         _httpClient = httpClient;
         _logger = logger;
     }
-    
+
     public async Task<ServiceCall<BankPaymentResponse>> ProcessPaymentAsync(BankPaymentRequest request)
     {
-        try
+        for (var attempt = 1; attempt <= MaxAttempts; attempt++)
         {
-            var response = await _httpClient.PostAsJsonAsync("/payments", request);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                LogError(request);
+                var response = await _httpClient.PostAsJsonAsync("/payments", request);
 
-                return new ServiceCall<BankPaymentResponse>() { IsSuccess = false };
+                if (!response.IsSuccessStatusCode)
+                {
+                    LogError(request, attempt);
+                    if (attempt == MaxAttempts)
+                    {
+                        return ServiceCall<BankPaymentResponse>.Failure();
+                    }
+
+                    continue;
+                }
+
+                var processedResponse = await response.Content.ReadFromJsonAsync<BankPaymentResponse>();
+
+                if (processedResponse is null)
+                {
+                    LogError(request, attempt);
+                    if (attempt == MaxAttempts)
+                    {
+                        return ServiceCall<BankPaymentResponse>.Failure();
+                    }
+
+                    continue;
+                }
+
+                return ServiceCall<BankPaymentResponse>.Success(processedResponse);
             }
-            
-            var processedResponse = await response.Content.ReadFromJsonAsync<BankPaymentResponse>();
-
-            if (processedResponse is null)
+            catch (Exception)
             {
-                LogError(request);
-
-                return new ServiceCall<BankPaymentResponse>() { IsSuccess = false };
+                LogError(request, attempt);
+                if (attempt == MaxAttempts)
+                {
+                    throw;
+                }
             }
-            
-            return ServiceCall<BankPaymentResponse>.Success(processedResponse);
         }
-        catch (Exception e)
-        {
-            LogError(request);
-            throw;
-        }
+
+        return ServiceCall<BankPaymentResponse>.Failure();
     }
 
-    private void LogError(BankPaymentRequest request)
+    private void LogError(BankPaymentRequest request, int attempt)
     {
-        _logger.LogError($"An error occured while processing payment for card {PaymentResponseHelper.GetLastFourDigits(request.CardNumber)}");
+        _logger.LogError(
+            "An error occured while processing payment for card {CardLastFour} (attempt {Attempt}/{MaxAttempts})",
+            PaymentResponseHelper.GetLastFourDigits(request.CardNumber),
+            attempt,
+            MaxAttempts);
     }
 }

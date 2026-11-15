@@ -172,6 +172,7 @@ Same paths on `http://localhost:5067` if you prefer not to use `-k` with HTTPS.
 - [ ] Clarify HTTP status for bank outage (400 vs 502/503) vs validation failures
 - [ ] Use `GetPaymentResponse` for GET (or remove the unused DTO)
 - [ ] Make `PaymentsRepository` thread-safe / encapsulate the public `List`
+- [ ] Seperate availability from success boolean in call to bank client
 
 ### Packaging / hardening
 - [ ] HttpClient timeout 
