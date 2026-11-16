@@ -4,6 +4,7 @@ namespace PaymentGateway.Api.Models.Requests;
 
 public class BankPaymentRequest
 {
+    // Could pass in an Id in the request to used as idempotency key
     [JsonPropertyName("card_number")]
     public string CardNumber { get; set; } = string.Empty;
 

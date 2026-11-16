@@ -173,6 +173,7 @@ Same paths on `http://localhost:5067` if you prefer not to use `-k` with HTTPS.
 - [ ] Use `GetPaymentResponse` for GET (or remove the unused DTO)
 - [ ] Make `PaymentsRepository` thread-safe / encapsulate the public `List`
 - [ ] Separate availability from success boolean in call to bank client for easy understanding on why bank call is failing
+- [ ] Use an idempotency key for the payments to reduce risk of double spend
 
 ### Packaging / hardening
 - [ ] HttpClient timeout 
